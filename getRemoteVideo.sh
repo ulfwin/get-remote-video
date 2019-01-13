@@ -9,6 +9,8 @@ folders=(
 
 fileTypes='\.3G2$|\.3GP$|\.ASF$|\.AVI$|\.FLV$|\.M4V$|\.MOV$|\.MP4$|\.MPG$|\.RM$|\.SWF$|\.VOB$|\.WMV$|\.mkv$'
 
+cutMessage="------- List of found videos --------"
+
 # Get list of files from remote server
 matches=$(sshpass -p <password> ssh -T <user@server> <<EOF
 # loop through all folders and save file paths to variable
@@ -24,6 +26,9 @@ for folder in ${folders[@]}; do
 	fi
 done
 
+# Print line where to cut (to remove login messages like 'last login')
+echo $cutMessage
+
 # Add number to lines and use ls to get file sizes
 i=0
 while read -r file; do
@@ -37,10 +42,9 @@ printf "$matches\n"
 
 echo "Enter the number of the video you would like to download and press enter: "
 read nr
-#echo ${resultArray[$nr]}
 
-# Choose correct line, remove all other than file path and replace spaces (if they exist)
-file2download=$(printf "$matches\n" | head -$(( $nr+1 )) | tail -1 | sed 's%.* /%/%' | sed 's/ /\\\ /g')
+# Cut message, choose correct line, remove all other than file path and replace spaces (if they exist)
+file2download=$(printf "$matches\n" | sed "1,/^$cutMessage\$/d" | head -$(( $nr+1 )) | tail -1 | sed 's%.* /%/%' | sed 's/ /\\\ /g')
 
 # Replace file extension with *
 files2download="${file2download%.*}.*"
